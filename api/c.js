@@ -1,4 +1,3 @@
-// Serverless High-Frequency Market Stream Backend
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -9,50 +8,44 @@ export default async function handler(req, res) {
     }
 
     const { pair } = req.query;
-    const targetPair = pair || "USD/PKR (OTC)";
+    const rawPair = pair || "USD/PKR (OTC)";
+    
+    // Clean key name for Firebase compatibility (replacing / with _)
+    const cleanKey = rawPair.replace(/\//g, "_").replace(/[^a-zA-Z0-9_]/g, "");
 
     const basePrices = {
-        "USD/PKR (OTC)": 278.50,
-        "USD/INR (OTC)": 83.40,
-        "USD/BDT (OTC)": 117.20,
-        "USD/BRL (OTC)": 5.45,
-        "USD/ARS (OTC)": 920.10
+        "USD_PKR_OTC": 278.5000,
+        "USD_INR_OTC": 83.4000,
+        "USD_BDT_OTC": 117.2000
     };
 
-    let price = basePrices[targetPair] || 100.00;
+    let price = basePrices[cleanKey] || 100.0000;
     const FIREBASE_URL = "https://reactions-maker-site-default-rtdb.firebaseio.com/pr.json";
-
-    let forceMode = "NEUTRAL";
-    let spike = 0;
 
     try {
         const response = await fetch(FIREBASE_URL);
         if (response.ok) {
             const data = await response.json();
-            if (data && data.controls && data.controls[targetPair]) {
-                forceMode = data.controls[targetPair].mode || "NEUTRAL";
-                spike = parseFloat(data.controls[targetPair].spike || 0);
+            if (data && data.controls && data.controls[cleanKey]) {
+                const item = data.controls[cleanKey];
+                
+                // If custom price set by Admin directly
+                if (item.customPrice !== undefined && item.customPrice !== null) {
+                    price = parseFloat(item.customPrice);
+                } else if (item.mode === "FORCE_UP") {
+                    price += 0.0500;
+                } else if (item.mode === "FORCE_DOWN") {
+                    price -= 0.0500;
+                }
             }
         }
     } catch (e) {
-        // Fallback smooth random engine
+        // Firebase failure handle
     }
-
-    // Calculation Engine
-    let delta = (Math.random() - 0.496) * (price * 0.0008);
-
-    if (forceMode === "FORCE_UP") {
-        delta += Math.abs(price * 0.0006);
-    } else if (forceMode === "FORCE_DOWN") {
-        delta -= Math.abs(price * 0.0006);
-    }
-
-    price = price + delta + spike;
 
     return res.status(200).json({
-        pair: targetPair,
+        pair: rawPair,
         price: parseFloat(price.toFixed(4)),
-        mode: forceMode,
         timestamp: Date.now()
     });
 }
