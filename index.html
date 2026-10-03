@@ -2,24 +2,23 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quantum Trade OTC</title>
-    <!-- FontAwesome & Google Fonts -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Quantum Trade OTC Pro</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --bg-dark: #0e131d;
-            --panel-bg: #181e29;
-            --border-color: #262f3e;
-            --green: #00c853;
-            --green-hover: #00e676;
-            --red: #ff3d00;
-            --red-hover: #ff5252;
+            --bg-dark: #0b0e14;
+            --panel-bg: #151a24;
+            --border-color: #232a37;
+            --green: #089981;
+            --green-glow: rgba(8, 153, 129, 0.4);
+            --red: #f23645;
+            --red-glow: rgba(242, 54, 69, 0.4);
             --text-main: #f1f5f9;
-            --text-muted: #8e9bb0;
-            --accent-cyan: #00e5ff;
+            --text-muted: #787b86;
+            --accent-cyan: #2962ff;
         }
 
         * {
@@ -28,6 +27,7 @@
             padding: 0;
             font-family: 'Inter', sans-serif;
             user-select: none;
+            touch-action: none;
         }
 
         body {
@@ -39,130 +39,93 @@
             overflow: hidden;
         }
 
-        /* --- TOP BAR --- */
+        /* --- HEADER --- */
         header {
-            height: 55px;
+            height: 50px;
             background: var(--panel-bg);
             border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 16px;
+            padding: 0 12px;
             z-index: 10;
         }
 
         .brand {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             font-weight: 800;
-            font-size: 16px;
+            font-size: 15px;
             color: var(--accent-cyan);
         }
 
-        /* Custom Selector Dropdown with Flags */
-        .pair-dropdown {
-            position: relative;
-        }
+        .pair-dropdown { position: relative; }
 
         .selected-pair-btn {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 6px 14px;
+            border-radius: 6px;
+            padding: 5px 10px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             cursor: pointer;
-            transition: all 0.2s ease;
         }
 
-        .selected-pair-btn:hover {
-            border-color: var(--accent-cyan);
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .flag-icon {
-            width: 22px;
-            height: 15px;
-            border-radius: 2px;
-            object-fit: cover;
-        }
+        .flag-icon { width: 20px; height: 14px; border-radius: 2px; object-fit: cover; }
 
         .dropdown-menu {
             position: absolute;
             top: 110%;
             left: 0;
-            width: 220px;
+            width: 210px;
             background: var(--panel-bg);
             border: 1px solid var(--border-color);
-            border-radius: 10px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.7);
             display: none;
             flex-direction: column;
-            overflow: hidden;
             z-index: 100;
         }
 
-        .dropdown-menu.active {
-            display: flex;
-        }
+        .dropdown-menu.active { display: flex; }
 
         .pair-option {
-            padding: 10px 14px;
+            padding: 10px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .pair-option:hover {
-            background: rgba(255, 255, 255, 0.06);
-        }
-
-        .pair-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
         }
 
-        .payout-tag {
-            font-size: 11px;
-            color: var(--green);
-            font-weight: 700;
-        }
+        .pair-option:hover { background: rgba(255, 255, 255, 0.06); }
 
         .demo-balance-box {
-            background: rgba(0, 200, 83, 0.1);
-            border: 1px solid rgba(0, 200, 83, 0.3);
-            border-radius: 8px;
-            padding: 6px 14px;
+            background: rgba(8, 153, 129, 0.12);
+            border: 1px solid rgba(8, 153, 129, 0.3);
+            border-radius: 6px;
+            padding: 4px 10px;
             text-align: right;
         }
 
-        .balance-label {
-            font-size: 9px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            font-weight: 700;
+        .balance-label { font-size: 9px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
+        .balance-amount { font-size: 13px; font-weight: 800; color: var(--green); }
+
+        .demo-text-desktop { display: inline; }
+        .demo-text-mobile { display: none; }
+
+        @media (max-width: 600px) {
+            .demo-text-desktop { display: none; }
+            .demo-text-mobile { display: inline; }
+            .control-panel { width: 100% !important; height: 180px; flex-direction: row !important; }
+            .workspace { flex-direction: column; }
         }
 
-        .balance-amount {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--green);
-        }
-
-        /* --- MAIN WORKSPACE --- */
-        .workspace {
-            display: flex;
-            flex: 1;
-            position: relative;
-            overflow: hidden;
-        }
+        /* --- WORKSPACE --- */
+        .workspace { display: flex; flex: 1; position: relative; overflow: hidden; }
 
         .chart-area {
             flex: 1;
@@ -171,58 +134,20 @@
             cursor: crosshair;
         }
 
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
+        canvas { display: block; width: 100%; height: 100%; }
 
-        /* Canvas Controls Overlay */
-        .canvas-toolbar {
-            position: absolute;
-            left: 20px;
-            bottom: 20px;
-            background: rgba(24, 30, 41, 0.85);
-            backdrop-filter: blur(8px);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            display: flex;
-            gap: 4px;
-            padding: 4px;
-            z-index: 5;
-        }
-
-        .tool-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-main);
-            width: 32px;
-            height: 32px;
-            border-radius: 6px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            transition: background 0.2s;
-        }
-
-        .tool-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        /* Timeframe Selector Toolbar */
+        /* Timeframe Selector */
         .timeframe-toolbar {
             position: absolute;
-            left: 20px;
-            top: 20px;
-            background: rgba(24, 30, 41, 0.85);
+            left: 15px;
+            top: 15px;
+            background: rgba(21, 26, 36, 0.85);
             backdrop-filter: blur(8px);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: 6px;
             display: flex;
-            gap: 4px;
-            padding: 4px;
+            gap: 2px;
+            padding: 3px;
             z-index: 5;
         }
 
@@ -230,48 +155,35 @@
             background: transparent;
             border: none;
             color: var(--text-muted);
-            padding: 4px 10px;
-            border-radius: 6px;
+            padding: 4px 8px;
+            border-radius: 4px;
             font-size: 11px;
             font-weight: 700;
             cursor: pointer;
         }
 
-        .tf-btn.active {
-            background: var(--accent-cyan);
-            color: #000;
-        }
+        .tf-btn.active { background: var(--accent-cyan); color: #fff; }
 
-        /* --- RIGHT SIDEBAR CONTROLS --- */
+        /* RIGHT PANEL */
         .control-panel {
-            width: 280px;
+            width: 260px;
             background: var(--panel-bg);
             border-left: 1px solid var(--border-color);
-            padding: 20px 16px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
-            gap: 18px;
+            gap: 12px;
             z-index: 5;
         }
 
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .control-label {
-            font-size: 11px;
-            color: var(--text-muted);
-            font-weight: 700;
-            text-transform: uppercase;
-        }
+        .control-group { display: flex; flex-direction: column; gap: 4px; }
+        .control-label { font-size: 10px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
 
         .input-box {
-            background: rgba(0, 0, 0, 0.25);
+            background: rgba(0, 0, 0, 0.3);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 10px;
+            border-radius: 6px;
+            padding: 8px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -281,7 +193,7 @@
             background: transparent;
             border: none;
             color: #fff;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 700;
             width: 100%;
             outline: none;
@@ -290,50 +202,63 @@
 
         .btn-trade {
             border: none;
-            padding: 16px;
-            border-radius: 10px;
-            font-size: 15px;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 14px;
             font-weight: 800;
             color: #fff;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            transition: transform 0.1s, filter 0.2s;
+            transition: transform 0.1s;
         }
 
-        .btn-trade:active { transform: scale(0.98); }
-        .btn-up { background: var(--green); box-shadow: 0 4px 15px rgba(0,200,83,0.3); }
-        .btn-up:hover { background: var(--green-hover); }
-        .btn-down { background: var(--red); box-shadow: 0 4px 15px rgba(255,61,0,0.3); }
-        .btn-down:hover { background: var(--red-hover); }
+        .btn-trade:active { transform: scale(0.97); }
+        .btn-up { background: var(--green); box-shadow: 0 4px 12px var(--green-glow); }
+        .btn-down { background: var(--red); box-shadow: 0 4px 12px var(--red-glow); }
 
-        /* Trade Logs / Active Trades Box */
         .trades-log {
             flex: 1;
             background: rgba(0, 0, 0, 0.2);
             border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 10px;
+            border-radius: 6px;
+            padding: 8px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
         }
 
         .trade-card {
             background: rgba(255, 255, 255, 0.03);
-            border-left: 3px solid var(--accent-cyan);
-            padding: 8px;
+            padding: 6px 8px;
             border-radius: 4px;
             font-size: 11px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-left: 3px solid var(--accent-cyan);
         }
 
-        .trade-card.win { border-left-color: var(--green); }
-        .trade-card.loss { border-left-color: var(--red); }
+        /* Quotex Result Modal */
+        .result-overlay {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(21, 26, 36, 0.95);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 20px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            z-index: 99;
+            animation: slideIn 0.3s forwards;
+        }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -344,116 +269,112 @@
             <i class="fa-solid fa-chart-line"></i> QUANTUM OTC
         </div>
 
-        <!-- Custom Flag Pair Selector -->
         <div class="pair-dropdown">
             <div class="selected-pair-btn" onclick="togglePairDropdown()">
-                <img src="https://flagcdn.com/w40/pk.png" id="selectedFlag" class="flag-icon" alt="flag">
-                <span id="selectedPairText" style="font-weight: 700; font-size: 13px;">USD/PKR (OTC)</span>
-                <i class="fa-solid fa-chevron-down" style="font-size: 10px; color: var(--text-muted);"></i>
+                <img src="https://flagcdn.com/w40/pk.png" id="selectedFlag" class="flag-icon">
+                <span id="selectedPairText" style="font-weight: 700; font-size: 12px;">USD/PKR (OTC)</span>
+                <i class="fa-solid fa-chevron-down" style="font-size: 9px; color: var(--text-muted);"></i>
             </div>
 
             <div class="dropdown-menu" id="pairMenu">
-                <div class="pair-option" onclick="selectPair('USD/PKR (OTC)', 'pk', 'https://flagcdn.com/w40/pk.png')">
-                    <div class="pair-info"><img src="https://flagcdn.com/w40/pk.png" class="flag-icon"> USD/PKR (OTC)</div>
-                    <span class="payout-tag">92%</span>
+                <div class="pair-option" onclick="selectPair('USD/PKR (OTC)', 'https://flagcdn.com/w40/pk.png')">
+                    <span><img src="https://flagcdn.com/w40/pk.png" class="flag-icon"> USD/PKR (OTC)</span>
+                    <span style="color:var(--green)">92%</span>
                 </div>
-                <div class="pair-option" onclick="selectPair('USD/INR (OTC)', 'in', 'https://flagcdn.com/w40/in.png')">
-                    <div class="pair-info"><img src="https://flagcdn.com/w40/in.png" class="flag-icon"> USD/INR (OTC)</div>
-                    <span class="payout-tag">90%</span>
+                <div class="pair-option" onclick="selectPair('USD/INR (OTC)', 'https://flagcdn.com/w40/in.png')">
+                    <span><img src="https://flagcdn.com/w40/in.png" class="flag-icon"> USD/INR (OTC)</span>
+                    <span style="color:var(--green)">90%</span>
                 </div>
-                <div class="pair-option" onclick="selectPair('USD/BDT (OTC)', 'bd', 'https://flagcdn.com/w40/bd.png')">
-                    <div class="pair-info"><img src="https://flagcdn.com/w40/bd.png" class="flag-icon"> USD/BDT (OTC)</div>
-                    <span class="payout-tag">88%</span>
+                <div class="pair-option" onclick="selectPair('USD/BDT (OTC)', 'https://flagcdn.com/w40/bd.png')">
+                    <span><img src="https://flagcdn.com/w40/bd.png" class="flag-icon"> USD/BDT (OTC)</span>
+                    <span style="color:var(--green)">88%</span>
                 </div>
-                <div class="pair-option" onclick="selectPair('USD/BRL (OTC)', 'br', 'https://flagcdn.com/w40/br.png')">
-                    <div class="pair-info"><img src="https://flagcdn.com/w40/br.png" class="flag-icon"> USD/BRL (OTC)</div>
-                    <span class="payout-tag">85%</span>
+                <div class="pair-option" onclick="selectPair('USD/BRL (OTC)', 'https://flagcdn.com/w40/br.png')">
+                    <span><img src="https://flagcdn.com/w40/br.png" class="flag-icon"> USD/BRL (OTC)</span>
+                    <span style="color:var(--green)">85%</span>
                 </div>
-                <div class="pair-option" onclick="selectPair('USD/ARS (OTC)', 'ar', 'https://flagcdn.com/w40/ar.png')">
-                    <div class="pair-info"><img src="https://flagcdn.com/w40/ar.png" class="flag-icon"> USD/ARS (OTC)</div>
-                    <span class="payout-tag">87%</span>
+                <div class="pair-option" onclick="selectPair('USD/ARS (OTC)', 'https://flagcdn.com/w40/ar.png')">
+                    <span><img src="https://flagcdn.com/w40/ar.png" class="flag-icon"> USD/ARS (OTC)</span>
+                    <span style="color:var(--green)">87%</span>
                 </div>
             </div>
         </div>
 
-        <!-- Demo Balance -->
         <div class="demo-balance-box">
-            <div class="balance-label">Demo Account</div>
+            <div class="balance-label"><span class="demo-text-desktop">Demo Account</span><span class="demo-text-mobile">Demo</span></div>
             <div class="balance-amount" id="demoBalance">$10,000.00</div>
         </div>
     </header>
 
-    <!-- Main Workspace -->
+    <!-- Workspace -->
     <div class="workspace">
-        <!-- Canvas Chart Area -->
         <div class="chart-area" id="chartContainer">
             <canvas id="tradingCanvas"></canvas>
 
-            <!-- Timeframe Selector -->
             <div class="timeframe-toolbar">
-                <button class="tf-btn" onclick="setTimeframe(10, this)">10s</button>
-                <button class="tf-btn active" onclick="setTimeframe(30, this)">30s</button>
-                <button class="tf-btn" onclick="setTimeframe(60, this)">1m</button>
+                <button class="tf-btn" onclick="setCandleTimeframe(10, this)">10s</button>
+                <button class="tf-btn active" onclick="setCandleTimeframe(30, this)">30s</button>
+                <button class="tf-btn" onclick="setCandleTimeframe(60, this)">1m</button>
             </div>
 
-            <!-- Canvas Pan/Zoom Controls -->
-            <div class="canvas-toolbar">
-                <button class="tool-btn" onclick="zoomIn()"><i class="fa-solid fa-plus"></i></button>
-                <button class="tool-btn" onclick="zoomOut()"><i class="fa-solid fa-minus"></i></button>
-                <button class="tool-btn" onclick="panLeft()"><i class="fa-solid fa-arrow-left"></i></button>
-                <button class="tool-btn" onclick="panRight()"><i class="fa-solid fa-arrow-right"></i></button>
-                <button class="tool-btn" onclick="resetPanZoom()"><i class="fa-solid fa-rotate-right"></i></button>
+            <!-- Result Overlay -->
+            <div class="result-overlay" id="resultOverlay">
+                <i class="fa-solid fa-trophy" id="resIcon" style="font-size: 24px;"></i>
+                <div>
+                    <div id="resTitle" style="font-weight: 800; font-size: 14px;">WIN +$90.00</div>
+                    <div id="resSub" style="font-size: 11px; color: var(--text-muted);">Trade Result</div>
+                </div>
             </div>
         </div>
 
-        <!-- Right Control Panel -->
+        <!-- Controls -->
         <div class="control-panel">
             <div class="control-group">
-                <div class="control-label">Timer</div>
+                <div class="control-label">Trade Time</div>
                 <div class="input-box">
                     <i class="fa-regular fa-clock" style="color: var(--text-muted);"></i>
-                    <input type="text" id="tradeTimerInput" value="00:30" readonly>
+                    <input type="text" id="tradeDurationInput" value="00:30">
                 </div>
             </div>
 
             <div class="control-group">
                 <div class="control-label">Investment ($)</div>
                 <div class="input-box">
-                    <input type="number" id="tradeAmount" value="50" min="1" max="1000">
+                    <input type="number" id="tradeAmount" value="50" min="1">
                 </div>
             </div>
 
-            <button class="btn-trade btn-up" onclick="placeTrade('UP')">
+            <button class="btn-trade btn-up" onclick="executeTrade('UP')">
                 <span><i class="fa-solid fa-arrow-trend-up"></i> HIGHER</span>
-                <span>90%</span>
+                <span>92%</span>
             </button>
 
-            <button class="btn-trade btn-down" onclick="placeTrade('DOWN')">
+            <button class="btn-trade btn-down" onclick="executeTrade('DOWN')">
                 <span><i class="fa-solid fa-arrow-trend-down"></i> LOWER</span>
-                <span>90%</span>
+                <span>92%</span>
             </button>
 
-            <div class="control-label" style="margin-top: 10px;">Recent Trades</div>
+            <div class="control-label">Active / Closed Trades</div>
             <div class="trades-log" id="tradesLog"></div>
         </div>
     </div>
 
     <script>
-        // --- GLOBAL ENGINE STATE ---
         let balance = parseFloat(localStorage.getItem('qt_demo_balance')) || 10000.00;
         let currentPair = "USD/PKR (OTC)";
-        let candleTimeframe = 30; // Seconds
+        let candleTimeframe = 30; 
         let candles = [];
         let activeTrades = [];
 
-        // Canvas Settings
+        // Smooth Canvas Interaction Variables
         const canvas = document.getElementById('tradingCanvas');
         const ctx = canvas.getContext('2d');
         let zoomLevel = 1.0;
         let panXOffset = 0;
+        let isDragging = false;
+        let startDragX = 0;
 
-        // Base Prices per pair
-        const basePairPrices = {
+        const basePrices = {
             "USD/PKR (OTC)": 278.50,
             "USD/INR (OTC)": 83.40,
             "USD/BDT (OTC)": 117.20,
@@ -461,14 +382,15 @@
             "USD/ARS (OTC)": 920.10
         };
 
-        // Initialize App
         window.addEventListener('resize', resizeCanvas);
+
         document.addEventListener('DOMContentLoaded', () => {
             updateBalanceUI();
             resizeCanvas();
             initCandles();
-            setInterval(fetchEngineTick, 1000); // 1-Second WebSocket/API Tick Emulation
-            requestAnimationFrame(drawChartLoop);
+            setupEventListeners();
+            connectRealtimeStream();
+            requestAnimationFrame(renderSmoothChart);
         });
 
         function updateBalanceUI() {
@@ -482,12 +404,11 @@
             canvas.height = container.clientHeight;
         }
 
-        // Dropdown toggle
         function togglePairDropdown() {
             document.getElementById('pairMenu').classList.toggle('active');
         }
 
-        function selectPair(pairName, code, flagUrl) {
+        function selectPair(pairName, flagUrl) {
             currentPair = pairName;
             document.getElementById('selectedPairText').innerText = pairName;
             document.getElementById('selectedFlag').src = flagUrl;
@@ -495,196 +416,223 @@
             initCandles();
         }
 
-        // Set Timeframe
-        function setTimeframe(seconds, btn) {
-            candleTimeframe = seconds;
+        function setCandleTimeframe(sec, btn) {
+            candleTimeframe = sec;
             document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            document.getElementById('tradeTimerInput').value = `00:${seconds < 10 ? '0' + seconds : seconds}`;
             initCandles();
         }
 
-        // Generate Historical Candle Data
         function initCandles() {
             candles = [];
-            let price = basePairPrices[currentPair] || 100.00;
+            let price = basePrices[currentPair] || 100.00;
             const now = Math.floor(Date.now() / 1000);
 
-            for (let i = 50; i >= 0; i--) {
+            for (let i = 60; i >= 0; i--) {
                 let open = price;
-                let close = open + (Math.random() - 0.49) * (price * 0.0015);
-                let high = Math.max(open, close) + Math.random() * (price * 0.0008);
-                let low = Math.min(open, close) - Math.random() * (price * 0.0008);
+                let close = open + (Math.random() - 0.498) * (price * 0.0012);
+                let high = Math.max(open, close) + Math.random() * (price * 0.0005);
+                let low = Math.min(open, close) - Math.random() * (price * 0.0005);
 
                 candles.push({
                     time: now - (i * candleTimeframe),
-                    open: open,
-                    high: high,
-                    low: low,
-                    close: close
+                    open: open, high: high, low: low, close: close
                 });
                 price = close;
             }
         }
 
-        // Fetch Tick Data from api/c.js Backend
-        async function fetchEngineTick() {
-            try {
-                const response = await fetch(`/api/c.js?pair=${encodeURIComponent(currentPair)}`);
-                const data = await response.json();
-                
-                if (data && data.price) {
-                    processLiveTick(data.price);
+        // --- REALTIME WEBSOCKET STREAMING ---
+        function connectRealtimeStream() {
+            // Emulating high-frequency WebSocket Tick (100ms)
+            setInterval(async () => {
+                try {
+                    const res = await fetch(`/api/c.js?pair=${encodeURIComponent(currentPair)}`);
+                    const data = await res.json();
+                    if (data && data.price) {
+                        updateLiveTick(data.price);
+                    }
+                } catch (e) {
+                    const last = candles[candles.length - 1];
+                    let mock = last.close + (Math.random() - 0.495) * (last.close * 0.0006);
+                    updateLiveTick(mock);
                 }
-            } catch (err) {
-                // Safe Fallback Engine if backend delay
-                const lastCandle = candles[candles.length - 1];
-                let mockPrice = lastCandle.close + (Math.random() - 0.495) * (lastCandle.close * 0.0008);
-                processLiveTick(mockPrice);
-            }
-            
-            checkTradeExpiration();
+                checkTradesExpiration();
+            }, 100);
         }
 
-        function processLiveTick(price) {
+        function updateLiveTick(price) {
             if (candles.length === 0) return;
-
-            let currentCandle = candles[candles.length - 1];
+            let current = candles[candles.length - 1];
             let now = Math.floor(Date.now() / 1000);
 
-            // Timeframe check for creating a new candle
-            if (now - currentCandle.time >= candleTimeframe) {
-                candles.push({
-                    time: now,
-                    open: currentCandle.close,
-                    high: price,
-                    low: price,
-                    close: price
-                });
-                if (candles.length > 80) candles.shift();
+            if (now - current.time >= candleTimeframe) {
+                candles.push({ time: now, open: current.close, high: price, low: price, close: price });
+                if (candles.length > 100) candles.shift();
             } else {
-                // Update active candle
-                currentCandle.close = price;
-                currentCandle.high = Math.max(currentCandle.high, price);
-                currentCandle.low = Math.min(currentCandle.low, price);
+                current.close = price;
+                current.high = Math.max(current.high, price);
+                current.low = Math.min(current.low, price);
             }
         }
 
-        // --- CANVAS RENDER LOOP ---
-        function drawChartLoop() {
+        // --- MOUSE, TRACKPAD & TOUCH CONTROLS ---
+        function setupEventListeners() {
+            // Mouse Wheel Zoom
+            canvas.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                if (e.deltaY < 0) {
+                    zoomLevel = Math.min(zoomLevel + 0.08, 2.8);
+                } else {
+                    zoomLevel = Math.max(zoomLevel - 0.08, 0.4);
+                }
+            }, { passive: false });
+
+            // Drag Start (Mouse & Touch)
+            const startDrag = (x) => {
+                isDragging = true;
+                startDragX = x - panXOffset;
+            };
+
+            const moveDrag = (x) => {
+                if (!isDragging) return;
+                panXOffset = x - startDragX;
+            };
+
+            const endDrag = () => { isDragging = false; };
+
+            canvas.addEventListener('mousedown', (e) => startDrag(e.clientX));
+            window.addEventListener('mousemove', (e) => moveDrag(e.clientX));
+            window.addEventListener('mouseup', endDrag);
+
+            canvas.addEventListener('touchstart', (e) => startDrag(e.touches[0].clientX));
+            window.addEventListener('touchmove', (e) => moveDrag(e.touches[0].clientX));
+            window.addEventListener('touchend', endDrag);
+        }
+
+        // --- RENDER ENGINE ---
+        function renderSmoothChart() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             if (candles.length === 0) {
-                requestAnimationFrame(drawChartLoop);
+                requestAnimationFrame(renderSmoothChart);
                 return;
             }
 
-            const candleWidth = 12 * zoomLevel;
-            const candleGap = 6 * zoomLevel;
+            const candleWidth = 10 * zoomLevel;
+            const candleGap = 5 * zoomLevel;
             const step = candleWidth + candleGap;
 
-            // Calculate Price Min & Max
-            let minPrice = Infinity;
-            let maxPrice = -Infinity;
-
+            let minPrice = Infinity, maxPrice = -Infinity;
             candles.forEach(c => {
                 if (c.low < minPrice) minPrice = c.low;
                 if (c.high > maxPrice) maxPrice = c.high;
             });
 
-            const padding = (maxPrice - minPrice) * 0.1 || 1;
-            minPrice -= padding;
-            maxPrice += padding;
+            const pad = (maxPrice - minPrice) * 0.12 || 1;
+            minPrice -= pad; maxPrice += pad;
 
-            const priceToY = (price) => {
-                return canvas.height - ((price - minPrice) / (maxPrice - minPrice)) * (canvas.height - 80) - 40;
-            };
+            const getY = (p) => canvas.height - ((p - minPrice) / (maxPrice - minPrice)) * (canvas.height - 70) - 35;
 
-            // Grid lines
-            ctx.strokeStyle = 'rgba(38, 47, 62, 0.5)';
+            // Grid Lines
+            ctx.strokeStyle = 'rgba(35, 42, 55, 0.5)';
             ctx.lineWidth = 1;
-            for (let i = 1; i < 5; i++) {
-                let y = (canvas.height / 5) * i;
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(canvas.width, y);
-                ctx.stroke();
+            for (let i = 1; i < 6; i++) {
+                let y = (canvas.height / 6) * i;
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
             }
 
-            // Draw Candlesticks
-            let startX = canvas.width - 120 + panXOffset;
+            // Draw Candles
+            let startX = canvas.width - 100 + panXOffset;
 
             for (let i = candles.length - 1; i >= 0; i--) {
                 let c = candles[i];
                 let x = startX - (candles.length - 1 - i) * step;
 
-                if (x < -50 || x > canvas.width + 50) continue;
+                if (x < -20 || x > canvas.width + 20) continue;
 
-                let isGreen = c.close >= c.open;
-                ctx.strokeStyle = isGreen ? '#00c853' : '#ff3d00';
-                ctx.fillStyle = isGreen ? '#00c853' : '#ff3d00';
+                let isUp = c.close >= c.open;
+                ctx.strokeStyle = isUp ? '#089981' : '#f23645';
+                ctx.fillStyle = isUp ? '#089981' : '#f23645';
 
-                // Draw Wick
+                // Wick
                 ctx.beginPath();
-                ctx.moveTo(x, priceToY(c.high));
-                ctx.lineTo(x, priceToY(c.low));
+                ctx.moveTo(x, getY(c.high));
+                ctx.lineTo(x, getY(c.low));
                 ctx.stroke();
 
-                // Draw Body
-                let openY = priceToY(c.open);
-                let closeY = priceToY(c.close);
-                let bodyHeight = Math.max(Math.abs(closeY - openY), 2);
-                let bodyY = Math.min(openY, closeY);
-
-                ctx.fillRect(x - candleWidth / 2, bodyY, candleWidth, bodyHeight);
+                // Body
+                let openY = getY(c.open), closeY = getY(c.close);
+                let bodyH = Math.max(Math.abs(closeY - openY), 2);
+                ctx.fillRect(x - candleWidth / 2, Math.min(openY, closeY), candleWidth, bodyH);
             }
 
-            // Draw Current Live Price Line with Tag
-            let lastCandle = candles[candles.length - 1];
-            let currentY = priceToY(lastCandle.close);
+            // Draw Active Trade Indicators on Chart
+            activeTrades.forEach(t => {
+                let tradeY = getY(t.entryPrice);
+                ctx.setLineDash([3, 3]);
+                ctx.strokeStyle = t.type === 'UP' ? '#089981' : '#f23645';
+                ctx.beginPath(); ctx.moveTo(0, tradeY); ctx.lineTo(canvas.width, tradeY); ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Trade Icon Tag
+                ctx.fillStyle = t.type === 'UP' ? '#089981' : '#f23645';
+                ctx.fillRect(20, tradeY - 10, 50, 20);
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 10px Inter';
+                ctx.fillText(`${t.type} $${t.amount}`, 24, tradeY + 4);
+            });
+
+            // Live Price Line & Candle Countdown
+            let last = candles[candles.length - 1];
+            let liveY = getY(last.close);
 
             ctx.setLineDash([4, 4]);
-            ctx.strokeStyle = '#00e5ff';
-            ctx.beginPath();
-            ctx.moveTo(0, currentY);
-            ctx.lineTo(canvas.width, currentY);
-            ctx.stroke();
+            ctx.strokeStyle = '#2962ff';
+            ctx.beginPath(); ctx.moveTo(0, liveY); ctx.lineTo(canvas.width, liveY); ctx.stroke();
             ctx.setLineDash([]);
 
-            // Price Tag Box
-            ctx.fillStyle = '#00e5ff';
-            ctx.fillRect(canvas.width - 80, currentY - 12, 80, 24);
-            ctx.fillStyle = '#000000';
-            ctx.font = 'bold 11px Inter';
-            ctx.fillText(lastCandle.close.toFixed(2), canvas.width - 72, currentY + 4);
+            // Countdown Timer calculation
+            let now = Math.floor(Date.now() / 1000);
+            let secondsLeft = candleTimeframe - (now - last.time);
+            if (secondsLeft < 0) secondsLeft = 0;
+            let timerStr = `00:${secondsLeft < 10 ? '0' + secondsLeft : secondsLeft}`;
 
-            requestAnimationFrame(drawChartLoop);
+            // Price & Timer Box
+            ctx.fillStyle = '#2962ff';
+            ctx.fillRect(canvas.width - 90, liveY - 12, 90, 24);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 10px Inter';
+            ctx.fillText(`${last.close.toFixed(2)} | ${timerStr}`, canvas.width - 86, liveY + 4);
+
+            requestAnimationFrame(renderSmoothChart);
         }
 
-        // --- TRADING SYSTEM LOGIC ---
-        function placeTrade(type) {
+        // --- TRADING SYSTEM ---
+        function executeTrade(type) {
             const amount = parseFloat(document.getElementById('tradeAmount').value);
             if (isNaN(amount) || amount <= 0 || amount > balance) return;
 
             balance -= amount;
             updateBalanceUI();
 
+            const durationSec = 30; // 30 sec default trade time
             const entryPrice = candles[candles.length - 1].close;
+
             const trade = {
                 id: Date.now(),
                 pair: currentPair,
                 type: type,
                 amount: amount,
                 entryPrice: entryPrice,
-                duration: candleTimeframe,
-                expireTime: Date.now() + (candleTimeframe * 1000)
+                expireTime: Date.now() + (durationSec * 1000)
             };
 
             activeTrades.push(trade);
-            renderTradeLog(trade, 'ACTIVE');
+            updateTradeLogUI(trade, 'RUNNING');
         }
 
-        function checkTradeExpiration() {
+        function checkTradesExpiration() {
             const now = Date.now();
             const currentPrice = candles[candles.length - 1].close;
 
@@ -696,64 +644,64 @@
                     if (t.type === 'DOWN' && currentPrice < t.entryPrice) win = true;
 
                     if (win) {
-                        const payout = t.amount * 1.90;
-                        balance += payout;
+                        let profit = t.amount * 1.92;
+                        balance += profit;
                         updateBalanceUI();
-                        renderTradeLog(t, 'WIN', payout);
+                        showQuotexResult('WIN', profit);
+                        updateTradeLogUI(t, 'WIN', profit);
                     } else {
-                        renderTradeLog(t, 'LOSS', 0);
+                        showQuotexResult('LOSS', t.amount);
+                        updateTradeLogUI(t, 'LOSS', 0);
                     }
                     activeTrades.splice(i, 1);
                 }
             }
         }
 
-        function renderTradeLog(trade, status, payout = 0) {
+        function showQuotexResult(type, amt) {
+            const overlay = document.getElementById('resultOverlay');
+            const icon = document.getElementById('resIcon');
+            const title = document.getElementById('resTitle');
+
+            if (type === 'WIN') {
+                overlay.style.borderColor = "var(--green)";
+                icon.style.color = "var(--green)";
+                title.style.color = "var(--green)";
+                title.innerText = `WIN +$${amt.toFixed(2)}`;
+            } else {
+                overlay.style.borderColor = "var(--red)";
+                icon.style.color = "var(--red)";
+                title.style.color = "var(--red)";
+                title.innerText = `LOSS -$${amt.toFixed(2)}`;
+            }
+
+            overlay.style.display = 'flex';
+            setTimeout(() => { overlay.style.display = 'none'; }, 2500);
+        }
+
+        function updateTradeLogUI(trade, status, payout = 0) {
             const container = document.getElementById('tradesLog');
-            let el = document.getElementById(`trade-${trade.id}`);
+            let el = document.getElementById(`trd-${trade.id}`);
 
             if (!el) {
                 el = document.createElement('div');
-                el.id = `trade-${trade.id}`;
+                el.id = `trd-${trade.id}`;
                 container.prepend(el);
             }
 
-            if (status === 'ACTIVE') {
+            if (status === 'RUNNING') {
                 el.className = 'trade-card';
-                el.innerHTML = `
-                    <div>
-                        <strong style="color: ${trade.type === 'UP' ? 'var(--green)' : 'var(--red)'}">${trade.type}</strong> $${trade.amount}
-                        <br><span style="color: var(--text-muted);">${trade.pair}</span>
-                    </div>
-                    <div style="color: var(--accent-cyan);"><i class="fa-solid fa-spinner fa-spin"></i></div>
-                `;
+                el.innerHTML = `<span><strong>${trade.type}</strong> $${trade.amount}</span> <i class="fa-solid fa-spinner fa-spin" style="color:var(--accent-cyan)"></i>`;
             } else if (status === 'WIN') {
-                el.className = 'trade-card win';
-                el.innerHTML = `
-                    <div>
-                        <strong>${trade.type}</strong> $${trade.amount}
-                        <br><span style="color: var(--text-muted);">${trade.pair}</span>
-                    </div>
-                    <div style="color: var(--green); text-align: right;"><strong>+$${payout.toFixed(2)}</strong><br>WIN</div>
-                `;
+                el.className = 'trade-card';
+                el.style.borderLeftColor = 'var(--green)';
+                el.innerHTML = `<span><strong>${trade.type}</strong> $${trade.amount}</span> <span style="color:var(--green)">+$${payout.toFixed(2)}</span>`;
             } else {
-                el.className = 'trade-card loss';
-                el.innerHTML = `
-                    <div>
-                        <strong>${trade.type}</strong> $${trade.amount}
-                        <br><span style="color: var(--text-muted);">${trade.pair}</span>
-                    </div>
-                    <div style="color: var(--red); text-align: right;"><strong>-$${trade.amount.toFixed(2)}</strong><br>LOSS</div>
-                `;
+                el.className = 'trade-card';
+                el.style.borderLeftColor = 'var(--red)';
+                el.innerHTML = `<span><strong>${trade.type}</strong> $${trade.amount}</span> <span style="color:var(--red)">-$${trade.amount.toFixed(2)}</span>`;
             }
         }
-
-        // Pan & Zoom Handlers
-        function zoomIn() { zoomLevel = Math.min(zoomLevel + 0.2, 2.5); }
-        function zoomOut() { zoomLevel = Math.max(zoomLevel - 0.2, 0.5); }
-        function panLeft() { panXOffset -= 50; }
-        function panRight() { panXOffset += 50; }
-        function resetPanZoom() { zoomLevel = 1.0; panXOffset = 0; }
     </script>
 </body>
 </html>
