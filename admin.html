@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum OTC - Admin Command Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --panel-bg: #131a27;
+            --border: #222c3d;
+            --green: #00c853;
+            --red: #ff3d00;
+            --cyan: #00e5ff;
+            --text: #f1f5f9;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text);
+            padding: 30px 15px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .admin-box {
+            width: 100%;
+            max-width: 750px;
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header h2 { color: var(--cyan); font-size: 20px; font-weight: 800; }
+
+        .pair-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .pair-name { font-weight: 700; font-size: 15px; }
+
+        .btn-group { display: flex; gap: 8px; }
+
+        .btn-ctrl {
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #fff;
+            opacity: 0.5;
+        }
+
+        .btn-ctrl.active { opacity: 1; transform: scale(1.05); }
+        .btn-up { background: var(--green); }
+        .btn-neutral { background: #475569; }
+        .btn-down { background: var(--red); }
+
+        .status-badge {
+            font-size: 11px;
+            color: var(--cyan);
+            margin-top: 15px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="admin-box">
+        <div class="header">
+            <h2><i class="fa-solid fa-user-shield"></i> OTC Market Manipulation Panel</h2>
+            <span style="font-size: 12px; color: #8e9bb0;">Realtime Firebase Control</span>
+        </div>
+
+        <div id="pairsContainer">
+            <!-- Dynamic Controls Inserted via JS -->
+        </div>
+
+        <div class="status-badge" id="statusMessage">
+            <i class="fa-solid fa-circle-check"></i> Connected to Firebase Database
+        </div>
+    </div>
+
+    <script>
+        const FIREBASE_DB_URL = "https://reactions-maker-site-default-rtdb.firebaseio.com/pr.json";
+        
+        const pairs = [
+            "USD/PKR (OTC)",
+            "USD/INR (OTC)",
+            "USD/BDT (OTC)",
+            "USD/BRL (OTC)",
+            "USD/ARS (OTC)"
+        ];
+
+        let trendStates = {
+            "USD/PKR (OTC)": "NEUTRAL",
+            "USD/INR (OTC)": "NEUTRAL",
+            "USD/BDT (OTC)": "NEUTRAL",
+            "USD/BRL (OTC)": "NEUTRAL",
+            "USD/ARS (OTC)": "NEUTRAL"
+        };
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            await fetchCurrentSettings();
+            renderAdminControls();
+        });
+
+        async function fetchCurrentSettings() {
+            try {
+                const res = await fetch(FIREBASE_DB_URL);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.trends) {
+                        trendStates = { ...trendStates, ...data.trends };
+                    }
+                }
+            } catch (e) {
+                console.error("Firebase Read Error:", e);
+            }
+        }
+
+        function renderAdminControls() {
+            const container = document.getElementById('pairsContainer');
+            container.innerHTML = "";
+
+            pairs.forEach(pair => {
+                const current = trendStates[pair] || "NEUTRAL";
+                const card = document.createElement('div');
+                card.className = "pair-card";
+                card.innerHTML = `
+                    <div class="pair-name">${pair}</div>
+                    <div class="btn-group">
+                        <button class="btn-ctrl btn-up ${current === 'FORCE_UP' ? 'active' : ''}" 
+                            onclick="setTrend('${pair}', 'FORCE_UP')">
+                            <i class="fa-solid fa-arrow-trend-up"></i> FORCE UP
+                        </button>
+                        <button class="btn-ctrl btn-neutral ${current === 'NEUTRAL' ? 'active' : ''}" 
+                            onclick="setTrend('${pair}', 'NEUTRAL')">
+                            <i class="fa-solid fa-minus"></i> NEUTRAL
+                        </button>
+                        <button class="btn-ctrl btn-down ${current === 'FORCE_DOWN' ? 'active' : ''}" 
+                            onclick="setTrend('${pair}', 'FORCE_DOWN')">
+                            <i class="fa-solid fa-arrow-trend-down"></i> FORCE DOWN
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        async function setTrend(pair, trend) {
+            trendStates[pair] = trend;
+            renderAdminControls();
+
+            document.getElementById('statusMessage').innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Updating Firebase...`;
+
+            try {
+                await fetch(FIREBASE_DB_URL, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ trends: trendStates })
+                });
+
+                document.getElementById('statusMessage').innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--green)"></i> ${pair} set to ${trend} successfully!`;
+            } catch (e) {
+                document.getElementById('statusMessage').innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color:var(--red)"></i> Update Failed! Check network/Firebase permissions.`;
+            }
+        }
+    </script>
+</body>
+</html>
