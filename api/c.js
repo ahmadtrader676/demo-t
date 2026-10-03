@@ -1,6 +1,5 @@
-// Serverless Backend OTC Market Engine
+// Serverless High-Frequency Market Stream Backend
 export default async function handler(req, res) {
-    // Enable CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -12,7 +11,6 @@ export default async function handler(req, res) {
     const { pair } = req.query;
     const targetPair = pair || "USD/PKR (OTC)";
 
-    // Default base prices
     const basePrices = {
         "USD/PKR (OTC)": 278.50,
         "USD/INR (OTC)": 83.40,
@@ -21,40 +19,40 @@ export default async function handler(req, res) {
         "USD/ARS (OTC)": 920.10
     };
 
-    let basePrice = basePrices[targetPair] || 100.00;
-    const FIREBASE_DB_URL = "https://reactions-maker-site-default-rtdb.firebaseio.com/pr.json";
+    let price = basePrices[targetPair] || 100.00;
+    const FIREBASE_URL = "https://reactions-maker-site-default-rtdb.firebaseio.com/pr.json";
 
-    let adminTrend = "NEUTRAL"; // Defaults to NEUTRAL if not configured in DB
+    let forceMode = "NEUTRAL";
+    let spike = 0;
 
     try {
-        // Fetch Admin Manipulation Settings from Firebase
-        const fbRes = await fetch(FIREBASE_DB_URL);
-        if (fbRes.ok) {
-            const dbData = await fbRes.json();
-            if (dbData && dbData.trends && dbData.trends[targetPair]) {
-                adminTrend = dbData.trends[targetPair];
+        const response = await fetch(FIREBASE_URL);
+        if (response.ok) {
+            const data = await response.json();
+            if (data && data.controls && data.controls[targetPair]) {
+                forceMode = data.controls[targetPair].mode || "NEUTRAL";
+                spike = parseFloat(data.controls[targetPair].spike || 0);
             }
         }
     } catch (e) {
-        // Fallback to algorithmic generation if DB fetch times out
+        // Fallback smooth random engine
     }
 
-    // --- MANIPULATION & RANDOM WALK ALGORITHM ---
-    let randomNoise = (Math.random() - 0.495) * (basePrice * 0.001);
+    // Calculation Engine
+    let delta = (Math.random() - 0.496) * (price * 0.0008);
 
-    // Apply Admin Trend Bias
-    if (adminTrend === "FORCE_UP") {
-        randomNoise += (basePrice * 0.0008); // Push candle UP
-    } else if (adminTrend === "FORCE_DOWN") {
-        randomNoise -= (basePrice * 0.0008); // Push candle DOWN
+    if (forceMode === "FORCE_UP") {
+        delta += Math.abs(price * 0.0006);
+    } else if (forceMode === "FORCE_DOWN") {
+        delta -= Math.abs(price * 0.0006);
     }
 
-    const calculatedPrice = basePrice + randomNoise;
+    price = price + delta + spike;
 
     return res.status(200).json({
         pair: targetPair,
-        price: parseFloat(calculatedPrice.toFixed(4)),
-        trendMode: adminTrend,
+        price: parseFloat(price.toFixed(4)),
+        mode: forceMode,
         timestamp: Date.now()
     });
 }
