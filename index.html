@@ -39,7 +39,6 @@
             overflow: hidden;
         }
 
-        /* --- HEADER --- */
         header {
             height: 50px;
             background: var(--panel-bg);
@@ -120,11 +119,10 @@
         @media (max-width: 600px) {
             .demo-text-desktop { display: none; }
             .demo-text-mobile { display: inline; }
-            .control-panel { width: 100% !important; height: 180px; flex-direction: row !important; }
+            .control-panel { width: 100% !important; height: 210px; flex-direction: row !important; }
             .workspace { flex-direction: column; }
         }
 
-        /* --- WORKSPACE --- */
         .workspace { display: flex; flex: 1; position: relative; overflow: hidden; }
 
         .chart-area {
@@ -136,7 +134,6 @@
 
         canvas { display: block; width: 100%; height: 100%; }
 
-        /* Timeframe Selector */
         .timeframe-toolbar {
             position: absolute;
             left: 15px;
@@ -164,7 +161,6 @@
 
         .tf-btn.active { background: var(--accent-cyan); color: #fff; }
 
-        /* RIGHT PANEL */
         .control-panel {
             width: 260px;
             background: var(--panel-bg);
@@ -241,7 +237,6 @@
             border-left: 3px solid var(--accent-cyan);
         }
 
-        /* Quotex Result Modal */
         .result-overlay {
             position: absolute;
             top: 20px;
@@ -263,7 +258,6 @@
 </head>
 <body>
 
-    <!-- Header -->
     <header>
         <div class="brand">
             <i class="fa-solid fa-chart-line"></i> QUANTUM OTC
@@ -289,14 +283,6 @@
                     <span><img src="https://flagcdn.com/w40/bd.png" class="flag-icon"> USD/BDT (OTC)</span>
                     <span style="color:var(--green)">88%</span>
                 </div>
-                <div class="pair-option" onclick="selectPair('USD/BRL (OTC)', 'https://flagcdn.com/w40/br.png')">
-                    <span><img src="https://flagcdn.com/w40/br.png" class="flag-icon"> USD/BRL (OTC)</span>
-                    <span style="color:var(--green)">85%</span>
-                </div>
-                <div class="pair-option" onclick="selectPair('USD/ARS (OTC)', 'https://flagcdn.com/w40/ar.png')">
-                    <span><img src="https://flagcdn.com/w40/ar.png" class="flag-icon"> USD/ARS (OTC)</span>
-                    <span style="color:var(--green)">87%</span>
-                </div>
             </div>
         </div>
 
@@ -306,7 +292,6 @@
         </div>
     </header>
 
-    <!-- Workspace -->
     <div class="workspace">
         <div class="chart-area" id="chartContainer">
             <canvas id="tradingCanvas"></canvas>
@@ -317,7 +302,6 @@
                 <button class="tf-btn" onclick="setCandleTimeframe(60, this)">1m</button>
             </div>
 
-            <!-- Result Overlay -->
             <div class="result-overlay" id="resultOverlay">
                 <i class="fa-solid fa-trophy" id="resIcon" style="font-size: 24px;"></i>
                 <div>
@@ -327,13 +311,12 @@
             </div>
         </div>
 
-        <!-- Controls -->
         <div class="control-panel">
             <div class="control-group">
-                <div class="control-label">Trade Time</div>
+                <div class="control-label">Trade Time (Sec)</div>
                 <div class="input-box">
                     <i class="fa-regular fa-clock" style="color: var(--text-muted);"></i>
-                    <input type="text" id="tradeDurationInput" value="00:30">
+                    <input type="number" id="tradeDurationInput" value="30">
                 </div>
             </div>
 
@@ -366,7 +349,6 @@
         let candles = [];
         let activeTrades = [];
 
-        // Smooth Canvas Interaction Variables
         const canvas = document.getElementById('tradingCanvas');
         const ctx = canvas.getContext('2d');
         let zoomLevel = 1.0;
@@ -375,11 +357,9 @@
         let startDragX = 0;
 
         const basePrices = {
-            "USD/PKR (OTC)": 278.50,
-            "USD/INR (OTC)": 83.40,
-            "USD/BDT (OTC)": 117.20,
-            "USD/BRL (OTC)": 5.45,
-            "USD/ARS (OTC)": 920.10
+            "USD/PKR (OTC)": 278.5000,
+            "USD/INR (OTC)": 83.4000,
+            "USD/BDT (OTC)": 117.2000
         };
 
         window.addEventListener('resize', resizeCanvas);
@@ -428,37 +408,27 @@
             let price = basePrices[currentPair] || 100.00;
             const now = Math.floor(Date.now() / 1000);
 
-            for (let i = 60; i >= 0; i--) {
-                let open = price;
-                let close = open + (Math.random() - 0.498) * (price * 0.0012);
-                let high = Math.max(open, close) + Math.random() * (price * 0.0005);
-                let low = Math.min(open, close) - Math.random() * (price * 0.0005);
-
+            for (let i = 50; i >= 0; i--) {
                 candles.push({
                     time: now - (i * candleTimeframe),
-                    open: open, high: high, low: low, close: close
+                    open: price, high: price, low: price, close: price
                 });
-                price = close;
             }
         }
 
-        // --- REALTIME WEBSOCKET STREAMING ---
         function connectRealtimeStream() {
-            // Emulating high-frequency WebSocket Tick (100ms)
             setInterval(async () => {
                 try {
                     const res = await fetch(`/api/c.js?pair=${encodeURIComponent(currentPair)}`);
                     const data = await res.json();
-                    if (data && data.price) {
+                    if (data && data.price !== undefined) {
                         updateLiveTick(data.price);
                     }
                 } catch (e) {
-                    const last = candles[candles.length - 1];
-                    let mock = last.close + (Math.random() - 0.495) * (last.close * 0.0006);
-                    updateLiveTick(mock);
+                    // Fail silently - candle stays frozen if API/Admin isn't pushing
                 }
                 checkTradesExpiration();
-            }, 100);
+            }, 150);
         }
 
         function updateLiveTick(price) {
@@ -468,7 +438,7 @@
 
             if (now - current.time >= candleTimeframe) {
                 candles.push({ time: now, open: current.close, high: price, low: price, close: price });
-                if (candles.length > 100) candles.shift();
+                if (candles.length > 80) candles.shift();
             } else {
                 current.close = price;
                 current.high = Math.max(current.high, price);
@@ -476,29 +446,14 @@
             }
         }
 
-        // --- MOUSE, TRACKPAD & TOUCH CONTROLS ---
         function setupEventListeners() {
-            // Mouse Wheel Zoom
             canvas.addEventListener('wheel', (e) => {
                 e.preventDefault();
-                if (e.deltaY < 0) {
-                    zoomLevel = Math.min(zoomLevel + 0.08, 2.8);
-                } else {
-                    zoomLevel = Math.max(zoomLevel - 0.08, 0.4);
-                }
+                zoomLevel = e.deltaY < 0 ? Math.min(zoomLevel + 0.08, 3.0) : Math.max(zoomLevel - 0.08, 0.4);
             }, { passive: false });
 
-            // Drag Start (Mouse & Touch)
-            const startDrag = (x) => {
-                isDragging = true;
-                startDragX = x - panXOffset;
-            };
-
-            const moveDrag = (x) => {
-                if (!isDragging) return;
-                panXOffset = x - startDragX;
-            };
-
+            const startDrag = (x) => { isDragging = true; startDragX = x - panXOffset; };
+            const moveDrag = (x) => { if (isDragging) panXOffset = x - startDragX; };
             const endDrag = () => { isDragging = false; };
 
             canvas.addEventListener('mousedown', (e) => startDrag(e.clientX));
@@ -510,7 +465,6 @@
             window.addEventListener('touchend', endDrag);
         }
 
-        // --- RENDER ENGINE ---
         function renderSmoothChart() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -519,8 +473,8 @@
                 return;
             }
 
-            const candleWidth = 10 * zoomLevel;
-            const candleGap = 5 * zoomLevel;
+            const candleWidth = 12 * zoomLevel;
+            const candleGap = 6 * zoomLevel;
             const step = candleWidth + candleGap;
 
             let minPrice = Infinity, maxPrice = -Infinity;
@@ -529,12 +483,12 @@
                 if (c.high > maxPrice) maxPrice = c.high;
             });
 
-            const pad = (maxPrice - minPrice) * 0.12 || 1;
+            const pad = (maxPrice - minPrice) * 0.15 || 0.5;
             minPrice -= pad; maxPrice += pad;
 
-            const getY = (p) => canvas.height - ((p - minPrice) / (maxPrice - minPrice)) * (canvas.height - 70) - 35;
+            const getY = (p) => canvas.height - ((p - minPrice) / (maxPrice - minPrice)) * (canvas.height - 80) - 40;
 
-            // Grid Lines
+            // Grid lines
             ctx.strokeStyle = 'rgba(35, 42, 55, 0.5)';
             ctx.lineWidth = 1;
             for (let i = 1; i < 6; i++) {
@@ -542,8 +496,7 @@
                 ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
             }
 
-            // Draw Candles
-            let startX = canvas.width - 100 + panXOffset;
+            let startX = canvas.width - 110 + panXOffset;
 
             for (let i = candles.length - 1; i >= 0; i--) {
                 let c = candles[i];
@@ -555,68 +508,63 @@
                 ctx.strokeStyle = isUp ? '#089981' : '#f23645';
                 ctx.fillStyle = isUp ? '#089981' : '#f23645';
 
-                // Wick
                 ctx.beginPath();
                 ctx.moveTo(x, getY(c.high));
                 ctx.lineTo(x, getY(c.low));
                 ctx.stroke();
 
-                // Body
                 let openY = getY(c.open), closeY = getY(c.close);
                 let bodyH = Math.max(Math.abs(closeY - openY), 2);
                 ctx.fillRect(x - candleWidth / 2, Math.min(openY, closeY), candleWidth, bodyH);
             }
 
-            // Draw Active Trade Indicators on Chart
+            // Render Trades Markers
             activeTrades.forEach(t => {
                 let tradeY = getY(t.entryPrice);
-                ctx.setLineDash([3, 3]);
+                ctx.setLineDash([4, 4]);
                 ctx.strokeStyle = t.type === 'UP' ? '#089981' : '#f23645';
                 ctx.beginPath(); ctx.moveTo(0, tradeY); ctx.lineTo(canvas.width, tradeY); ctx.stroke();
                 ctx.setLineDash([]);
 
-                // Trade Icon Tag
                 ctx.fillStyle = t.type === 'UP' ? '#089981' : '#f23645';
-                ctx.fillRect(20, tradeY - 10, 50, 20);
+                ctx.fillRect(15, tradeY - 10, 55, 20);
                 ctx.fillStyle = '#fff';
                 ctx.font = 'bold 10px Inter';
-                ctx.fillText(`${t.type} $${t.amount}`, 24, tradeY + 4);
+                ctx.fillText(`${t.type} $${t.amount}`, 18, tradeY + 4);
             });
 
-            // Live Price Line & Candle Countdown
+            // Live Price Line & Countdown
             let last = candles[candles.length - 1];
             let liveY = getY(last.close);
 
-            ctx.setLineDash([4, 4]);
+            ctx.setLineDash([3, 3]);
             ctx.strokeStyle = '#2962ff';
             ctx.beginPath(); ctx.moveTo(0, liveY); ctx.lineTo(canvas.width, liveY); ctx.stroke();
             ctx.setLineDash([]);
 
-            // Countdown Timer calculation
             let now = Math.floor(Date.now() / 1000);
             let secondsLeft = candleTimeframe - (now - last.time);
             if (secondsLeft < 0) secondsLeft = 0;
             let timerStr = `00:${secondsLeft < 10 ? '0' + secondsLeft : secondsLeft}`;
 
-            // Price & Timer Box
             ctx.fillStyle = '#2962ff';
-            ctx.fillRect(canvas.width - 90, liveY - 12, 90, 24);
+            ctx.fillRect(canvas.width - 100, liveY - 12, 100, 24);
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 10px Inter';
-            ctx.fillText(`${last.close.toFixed(2)} | ${timerStr}`, canvas.width - 86, liveY + 4);
+            ctx.fillText(`${last.close.toFixed(4)} | ${timerStr}`, canvas.width - 96, liveY + 4);
 
             requestAnimationFrame(renderSmoothChart);
         }
 
-        // --- TRADING SYSTEM ---
         function executeTrade(type) {
             const amount = parseFloat(document.getElementById('tradeAmount').value);
+            const durationSec = parseInt(document.getElementById('tradeDurationInput').value) || 30;
+
             if (isNaN(amount) || amount <= 0 || amount > balance) return;
 
             balance -= amount;
             updateBalanceUI();
 
-            const durationSec = 30; // 30 sec default trade time
             const entryPrice = candles[candles.length - 1].close;
 
             const trade = {
