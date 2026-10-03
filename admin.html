@@ -30,7 +30,7 @@
 
         .admin-card {
             width: 100%;
-            max-width: 800px;
+            max-width: 850px;
             background: var(--panel-bg);
             border: 1px solid var(--border);
             border-radius: 12px;
@@ -50,28 +50,37 @@
             background: rgba(255,255,255,0.02);
             border: 1px solid var(--border);
             border-radius: 8px;
-            padding: 12px 15px;
-            margin-bottom: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 10px;
+            flex-direction: column;
+            gap: 12px;
         }
 
-        .pair-title { font-weight: 700; font-size: 14px; width: 140px; }
+        .pair-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 800;
+            font-size: 15px;
+        }
 
-        .btn-group { display: flex; gap: 6px; }
+        .controls-grid {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
 
         .btn-action {
             border: none;
-            padding: 8px 12px;
+            padding: 10px 14px;
             border-radius: 6px;
             font-weight: 700;
             font-size: 11px;
             cursor: pointer;
             color: #fff;
-            opacity: 0.4;
+            opacity: 0.5;
             transition: all 0.2s;
         }
 
@@ -79,6 +88,36 @@
         .btn-up { background: var(--green); }
         .btn-neutral { background: #475569; }
         .btn-down { background: var(--red); }
+
+        .price-input-box {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--border);
+            padding: 6px 10px;
+            border-radius: 6px;
+        }
+
+        .price-input-box input {
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-weight: 700;
+            width: 90px;
+            outline: none;
+        }
+
+        .btn-set {
+            background: var(--blue);
+            color: #fff;
+            border: none;
+            padding: 7px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+        }
 
         .status-bar {
             text-align: center;
@@ -92,14 +131,14 @@
 
     <div class="admin-card">
         <div class="header">
-            <h2 style="color:var(--blue); font-size: 18px;"><i class="fa-solid fa-sliders"></i> OTC Market Manipulation Control</h2>
-            <span style="font-size: 11px; color: #787b86;">Realtime Firebase Data Sync</span>
+            <h2 style="color:var(--blue); font-size: 18px;"><i class="fa-solid fa-sliders"></i> Admin Market Manipulator</h2>
+            <span style="font-size: 11px; color: #787b86;">Firebase Connected</span>
         </div>
 
         <div id="controlsList"></div>
 
         <div class="status-bar" id="syncStatus">
-            <i class="fa-solid fa-signal"></i> Firebase Live Sync Active
+            <i class="fa-solid fa-signal"></i> System Ready
         </div>
     </div>
 
@@ -107,11 +146,9 @@
         const FIREBASE_URL = "https://reactions-maker-site-default-rtdb.firebaseio.com/pr.json";
 
         const pairs = [
-            "USD/PKR (OTC)",
-            "USD/INR (OTC)",
-            "USD/BDT (OTC)",
-            "USD/BRL (OTC)",
-            "USD/ARS (OTC)"
+            { name: "USD/PKR (OTC)", key: "USD_PKR_OTC" },
+            { name: "USD/INR (OTC)", key: "USD_INR_OTC" },
+            { name: "USD/BDT (OTC)", key: "USD_BDT_OTC" }
         ];
 
         let controlData = {};
@@ -131,7 +168,7 @@
                     }
                 }
             } catch (e) {
-                console.error("Firebase fetch failed");
+                console.error("Firebase fetch error");
             }
         }
 
@@ -139,46 +176,77 @@
             const list = document.getElementById('controlsList');
             list.innerHTML = "";
 
-            pairs.forEach(pair => {
-                const currentMode = (controlData[pair] && controlData[pair].mode) ? controlData[pair].mode : "NEUTRAL";
+            pairs.forEach(p => {
+                const item = controlData[p.key] || { mode: "NEUTRAL", customPrice: "" };
 
                 const row = document.createElement('div');
                 row.className = "pair-row";
                 row.innerHTML = `
-                    <div class="pair-title">${pair}</div>
-                    <div class="btn-group">
-                        <button class="btn-action btn-up ${currentMode === 'FORCE_UP' ? 'active' : ''}" onclick="updatePairMode('${pair}', 'FORCE_UP')">
+                    <div class="pair-header">
+                        <span>${p.name}</span>
+                        <span style="font-size:11px; color:var(--blue);">Key: ${p.key}</span>
+                    </div>
+                    <div class="controls-grid">
+                        <button class="btn-action btn-up ${item.mode === 'FORCE_UP' ? 'active' : ''}" onclick="setMode('${p.key}', 'FORCE_UP')">
                             <i class="fa-solid fa-arrow-up"></i> FORCE GREEN
                         </button>
-                        <button class="btn-action btn-neutral ${currentMode === 'NEUTRAL' ? 'active' : ''}" onclick="updatePairMode('${pair}', 'NEUTRAL')">
-                            <i class="fa-solid fa-equals"></i> NORMAL
+                        <button class="btn-action btn-neutral ${item.mode === 'NEUTRAL' ? 'active' : ''}" onclick="setMode('${p.key}', 'NEUTRAL')">
+                            <i class="fa-solid fa-pause"></i> FREEZE / STUCK
                         </button>
-                        <button class="btn-action btn-down ${currentMode === 'FORCE_DOWN' ? 'active' : ''}" onclick="updatePairMode('${pair}', 'FORCE_DOWN')">
+                        <button class="btn-action btn-down ${item.mode === 'FORCE_DOWN' ? 'active' : ''}" onclick="setMode('${p.key}', 'FORCE_DOWN')">
                             <i class="fa-solid fa-arrow-down"></i> FORCE RED
                         </button>
+
+                        <div class="price-input-box">
+                            <span style="font-size:10px; color:#787b86;">PRICE:</span>
+                            <input type="number" step="0.0001" id="p-${p.key}" value="${item.customPrice || ''}" placeholder="Set Exact">
+                            <button class="btn-set" onclick="setCustomPrice('${p.key}')">SET</button>
+                        </div>
                     </div>
                 `;
                 list.appendChild(row);
             });
         }
 
-        async function updatePairMode(pair, mode) {
-            if (!controlData[pair]) controlData[pair] = {};
-            controlData[pair].mode = mode;
+        async function setMode(key, mode) {
+            if (!controlData[key]) controlData[key] = {};
+            controlData[key].mode = mode;
+            controlData[key].customPrice = null; // Clear manual price on mode switch
 
+            await pushToFirebase();
             renderAdminPanel();
-            document.getElementById('syncStatus').innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Pushing Update to Firebase...`;
+        }
+
+        async function setCustomPrice(key) {
+            const val = document.getElementById(`p-${key}`).value;
+            if (!val) return;
+
+            if (!controlData[key]) controlData[key] = {};
+            controlData[key].customPrice = parseFloat(val);
+            controlData[key].mode = "MANUAL";
+
+            await pushToFirebase();
+            renderAdminPanel();
+        }
+
+        async function pushToFirebase() {
+            document.getElementById('syncStatus').innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Saving...`;
 
             try {
-                await fetch(FIREBASE_URL, {
+                const res = await fetch(FIREBASE_URL, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ controls: controlData })
                 });
 
-                document.getElementById('syncStatus').innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--green)"></i> ${pair} updated to ${mode}`;
+                if (res.ok) {
+                    document.getElementById('syncStatus').innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--green)"></i> Data Live Updated Successfully!`;
+                } else {
+                    const err = await res.json();
+                    document.getElementById('syncStatus').innerHTML = `<i class="fa-solid fa-circle-exclamation" style="color:var(--red)"></i> ${err.error || 'Update Failed'}`;
+                }
             } catch (e) {
-                document.getElementById('syncStatus').innerHTML = `<i class="fa-solid fa-circle-exclamation" style="color:var(--red)"></i> Update Failed! Check Firebase connection.`;
+                document.getElementById('syncStatus').innerHTML = `<i class="fa-solid fa-circle-exclamation" style="color:var(--red)"></i> Connection Error!`;
             }
         }
     </script>
