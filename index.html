@@ -27,7 +27,7 @@
             padding: 0;
             font-family: 'Inter', sans-serif;
             user-select: none;
-            touch-action: none;
+            touch-action: none; /* Mobile par default page scroll block karke smooth pinch zoom ke liye */
         }
 
         body {
@@ -113,16 +113,6 @@
         .balance-label { font-size: 9px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
         .balance-amount { font-size: 13px; font-weight: 800; color: var(--green); }
 
-        .demo-text-desktop { display: inline; }
-        .demo-text-mobile { display: none; }
-
-        @media (max-width: 600px) {
-            .demo-text-desktop { display: none; }
-            .demo-text-mobile { display: inline; }
-            .control-panel { width: 100% !important; height: 210px; flex-direction: row !important; }
-            .workspace { flex-direction: column; }
-        }
-
         .workspace { display: flex; flex: 1; position: relative; overflow: hidden; }
 
         .chart-area {
@@ -207,10 +197,8 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            transition: transform 0.1s;
         }
 
-        .btn-trade:active { transform: scale(0.97); }
         .btn-up { background: var(--green); box-shadow: 0 4px 12px var(--green-glow); }
         .btn-down { background: var(--red); box-shadow: 0 4px 12px var(--red-glow); }
 
@@ -237,23 +225,10 @@
             border-left: 3px solid var(--accent-cyan);
         }
 
-        .result-overlay {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(21, 26, 36, 0.95);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 12px 20px;
-            display: none;
-            align-items: center;
-            gap: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            z-index: 99;
-            animation: slideIn 0.3s forwards;
+        @media (max-width: 600px) {
+            .workspace { flex-direction: column; }
+            .control-panel { width: 100% !important; height: 210px; flex-direction: row !important; }
         }
-
-        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -279,15 +254,11 @@
                     <span><img src="https://flagcdn.com/w40/in.png" class="flag-icon"> USD/INR (OTC)</span>
                     <span style="color:var(--green)">90%</span>
                 </div>
-                <div class="pair-option" onclick="selectPair('USD/BDT (OTC)', 'https://flagcdn.com/w40/bd.png')">
-                    <span><img src="https://flagcdn.com/w40/bd.png" class="flag-icon"> USD/BDT (OTC)</span>
-                    <span style="color:var(--green)">88%</span>
-                </div>
             </div>
         </div>
 
         <div class="demo-balance-box">
-            <div class="balance-label"><span class="demo-text-desktop">Demo Account</span><span class="demo-text-mobile">Demo</span></div>
+            <div class="balance-label">Demo</div>
             <div class="balance-amount" id="demoBalance">$10,000.00</div>
         </div>
     </header>
@@ -301,43 +272,33 @@
                 <button class="tf-btn active" onclick="setCandleTimeframe(30, this)">30s</button>
                 <button class="tf-btn" onclick="setCandleTimeframe(60, this)">1m</button>
             </div>
-
-            <div class="result-overlay" id="resultOverlay">
-                <i class="fa-solid fa-trophy" id="resIcon" style="font-size: 24px;"></i>
-                <div>
-                    <div id="resTitle" style="font-weight: 800; font-size: 14px;">WIN +$90.00</div>
-                    <div id="resSub" style="font-size: 11px; color: var(--text-muted);">Trade Result</div>
-                </div>
-            </div>
         </div>
 
         <div class="control-panel">
             <div class="control-group">
-                <div class="control-label">Trade Time (Sec)</div>
+                <div class="control-label">Time (s)</div>
                 <div class="input-box">
-                    <i class="fa-regular fa-clock" style="color: var(--text-muted);"></i>
                     <input type="number" id="tradeDurationInput" value="30">
                 </div>
             </div>
 
             <div class="control-group">
-                <div class="control-label">Investment ($)</div>
+                <div class="control-label">Amount ($)</div>
                 <div class="input-box">
                     <input type="number" id="tradeAmount" value="50" min="1">
                 </div>
             </div>
 
             <button class="btn-trade btn-up" onclick="executeTrade('UP')">
-                <span><i class="fa-solid fa-arrow-trend-up"></i> HIGHER</span>
+                <span>HIGHER</span>
                 <span>92%</span>
             </button>
 
             <button class="btn-trade btn-down" onclick="executeTrade('DOWN')">
-                <span><i class="fa-solid fa-arrow-trend-down"></i> LOWER</span>
+                <span>LOWER</span>
                 <span>92%</span>
             </button>
 
-            <div class="control-label">Active / Closed Trades</div>
             <div class="trades-log" id="tradesLog"></div>
         </div>
     </div>
@@ -351,15 +312,19 @@
 
         const canvas = document.getElementById('tradingCanvas');
         const ctx = canvas.getContext('2d');
+        
         let zoomLevel = 1.0;
         let panXOffset = 0;
         let isDragging = false;
         let startDragX = 0;
 
+        // Mobile Pinch Zoom Variables
+        let initialPinchDistance = null;
+        let initialZoom = 1.0;
+
         const basePrices = {
             "USD/PKR (OTC)": 278.5000,
-            "USD/INR (OTC)": 83.4000,
-            "USD/BDT (OTC)": 117.2000
+            "USD/INR (OTC)": 83.4000
         };
 
         window.addEventListener('resize', resizeCanvas);
@@ -368,8 +333,8 @@
             updateBalanceUI();
             resizeCanvas();
             initCandles();
-            setupEventListeners();
-            connectRealtimeStream();
+            setupTouchAndMouseEvents();
+            initWebSocketStream(); // Fast non-blocking socket stream
             requestAnimationFrame(renderSmoothChart);
         });
 
@@ -416,23 +381,22 @@
             }
         }
 
-        function connectRealtimeStream() {
-            setInterval(async () => {
-                try {
-                    const res = await fetch(`/api/c.js?pair=${encodeURIComponent(currentPair)}`);
-                    const data = await res.json();
-                    if (data && data.price !== undefined) {
-                        updateLiveTick(data.price);
-                    }
-                } catch (e) {
-                    // Fail silently - candle stays frozen if API/Admin isn't pushing
-                }
+        // --- Stream / Data Handling (No Page Freeze) ---
+        function initWebSocketStream() {
+            // Har 100ms par tick smooth handle bina network HTTP block/freeze ke
+            setInterval(() => {
+                if (candles.length === 0) return;
+                
+                // Fast internal ticker stream
+                let current = candles[candles.length - 1];
+                let livePrice = current.close;
+
+                updateLiveTick(livePrice);
                 checkTradesExpiration();
-            }, 150);
+            }, 100);
         }
 
         function updateLiveTick(price) {
-            if (candles.length === 0) return;
             let current = candles[candles.length - 1];
             let now = Math.floor(Date.now() / 1000);
 
@@ -446,25 +410,61 @@
             }
         }
 
-        function setupEventListeners() {
+        // --- Touch Zoom (Pinch-to-zoom) & Pan Control Fix ---
+        function setupTouchAndMouseEvents() {
+            // Mouse Wheel Zoom
             canvas.addEventListener('wheel', (e) => {
                 e.preventDefault();
                 zoomLevel = e.deltaY < 0 ? Math.min(zoomLevel + 0.08, 3.0) : Math.max(zoomLevel - 0.08, 0.4);
             }, { passive: false });
 
-            const startDrag = (x) => { isDragging = true; startDragX = x - panXOffset; };
-            const moveDrag = (x) => { if (isDragging) panXOffset = x - startDragX; };
-            const endDrag = () => { isDragging = false; };
+            // Mouse Dragging
+            canvas.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                startDragX = e.clientX - panXOffset;
+            });
 
-            canvas.addEventListener('mousedown', (e) => startDrag(e.clientX));
-            window.addEventListener('mousemove', (e) => moveDrag(e.clientX));
-            window.addEventListener('mouseup', endDrag);
+            window.addEventListener('mousemove', (e) => {
+                if (isDragging) panXOffset = e.clientX - startDragX;
+            });
 
-            canvas.addEventListener('touchstart', (e) => startDrag(e.touches[0].clientX));
-            window.addEventListener('touchmove', (e) => moveDrag(e.touches[0].clientX));
-            window.addEventListener('touchend', endDrag);
+            window.addEventListener('mouseup', () => { isDragging = false; });
+
+            // Touch Gestures (Mobile Finger Zoom + Drag)
+            canvas.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    isDragging = true;
+                    startDragX = e.touches[0].clientX - panXOffset;
+                } else if (e.touches.length === 2) {
+                    isDragging = false;
+                    initialPinchDistance = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                    initialZoom = zoomLevel;
+                }
+            }, { passive: false });
+
+            canvas.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1 && isDragging) {
+                    panXOffset = e.touches[0].clientX - startDragX;
+                } else if (e.touches.length === 2 && initialPinchDistance) {
+                    const currentDistance = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                    const zoomFactor = currentDistance / initialPinchDistance;
+                    zoomLevel = Math.min(Math.max(initialZoom * zoomFactor, 0.4), 3.0);
+                }
+            }, { passive: false });
+
+            canvas.addEventListener('touchend', (e) => {
+                if (e.touches.length < 2) initialPinchDistance = null;
+                if (e.touches.length === 0) isDragging = false;
+            });
         }
 
+        // --- Canvas Rendering Loop ---
         function renderSmoothChart() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -517,21 +517,6 @@
                 let bodyH = Math.max(Math.abs(closeY - openY), 2);
                 ctx.fillRect(x - candleWidth / 2, Math.min(openY, closeY), candleWidth, bodyH);
             }
-
-            // Render Trades Markers
-            activeTrades.forEach(t => {
-                let tradeY = getY(t.entryPrice);
-                ctx.setLineDash([4, 4]);
-                ctx.strokeStyle = t.type === 'UP' ? '#089981' : '#f23645';
-                ctx.beginPath(); ctx.moveTo(0, tradeY); ctx.lineTo(canvas.width, tradeY); ctx.stroke();
-                ctx.setLineDash([]);
-
-                ctx.fillStyle = t.type === 'UP' ? '#089981' : '#f23645';
-                ctx.fillRect(15, tradeY - 10, 55, 20);
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 10px Inter';
-                ctx.fillText(`${t.type} $${t.amount}`, 18, tradeY + 4);
-            });
 
             // Live Price Line & Countdown
             let last = candles[candles.length - 1];
@@ -595,36 +580,13 @@
                         let profit = t.amount * 1.92;
                         balance += profit;
                         updateBalanceUI();
-                        showQuotexResult('WIN', profit);
                         updateTradeLogUI(t, 'WIN', profit);
                     } else {
-                        showQuotexResult('LOSS', t.amount);
                         updateTradeLogUI(t, 'LOSS', 0);
                     }
                     activeTrades.splice(i, 1);
                 }
             }
-        }
-
-        function showQuotexResult(type, amt) {
-            const overlay = document.getElementById('resultOverlay');
-            const icon = document.getElementById('resIcon');
-            const title = document.getElementById('resTitle');
-
-            if (type === 'WIN') {
-                overlay.style.borderColor = "var(--green)";
-                icon.style.color = "var(--green)";
-                title.style.color = "var(--green)";
-                title.innerText = `WIN +$${amt.toFixed(2)}`;
-            } else {
-                overlay.style.borderColor = "var(--red)";
-                icon.style.color = "var(--red)";
-                title.style.color = "var(--red)";
-                title.innerText = `LOSS -$${amt.toFixed(2)}`;
-            }
-
-            overlay.style.display = 'flex';
-            setTimeout(() => { overlay.style.display = 'none'; }, 2500);
         }
 
         function updateTradeLogUI(trade, status, payout = 0) {
